@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href='https://fonts.googleapis.com/css?family=Source+Code+Pro:200,300,400,500,600,700,900&subset=latin,latin-ext' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Indie Flower' rel='stylesheet'>
+
+  <style>
+
+  html {
+    cursor: url('carrot2.png'), pointer;
+  }
+
+  .center {
+      position: absolute;
+      width: 100px;
+      height: 50px;
+      top: 50%;
+      left: 50%;
+      margin-left: -50px; /* margin is -0.5 * dimension */
+      margin-top: -25px;
+      font-size: 32px;
+      // font-family: "Bubbler One";
+      font-family = Indie Flower;
+  }​
+  </style>
+</head>
+<body>
+
+<pre id="display-bunny" class="center" onclick="onClick()">
+ ()()
+ <span id="mouse-reference">(</span>^^)
+c(")(")
+</pre>
+
+<script defer="defer">
+(function() {
+  "use strict";
+
+  var R_CENTER = 130/Math.sqrt(2); // px
+  var R_OUTER = 130; // px
+  var THETA_DEAD = rad(5);
+  var count = 0
+  var animating = false;
+
+  function rad(deg) {
+    return deg / 180 * Math.PI;
+  }
+
+  var frames = {};
+    frames.top =
+    " ()()\n" +
+    " <span id=\"mouse-reference\">(</span>'')\n" +
+    "c(\")(\")";
+
+    frames.topLeft =
+    "  /)/)\n" +
+    " <span id=\"mouse-reference\">(</span>''=)\n" +
+    "c(\")(\")";
+
+    frames.left =
+    "  /)/)\n" +
+    " <span id=\"mouse-reference\">(</span>^^=)\n" + // ••
+    "c(\")(\")";
+
+    frames.bottomLeft =
+    "  /)/)\n" +
+    " <span id=\"mouse-reference\">(</span>..=)\n" +
+    "c(\")(\")";
+
+    frames.bottom =
+    " ()()\n" +
+    " <span id=\"mouse-reference\">(</span>..)\n" +
+    "c(\")(\")";
+
+    frames.bottomRight =
+    " (\\(\\\n" +
+    " <span id=\"mouse-reference\">(</span>=..)\n" +
+    "c(\")(\")";
+
+    frames.right =
+    " (\\(\\\n" +
+    " <span id=\"mouse-reference\">(</span>=^^)\n" + // ••
+    "c(\")(\")";
+
+    frames.topRight =
+    " (\\(\\\n" +
+    " <span id=\"mouse-reference\">(</span>='')\n" +
+    "c(\")(\")";
+
+    frames.center =
+    " ()()\n" +
+    " <span id=\"mouse-reference\">(</span>^O^)\n" +
+    "c(\")(\")";
+
+    frames.munch1 =
+    " ()()\n" +
+    " <span id=\"mouse-reference\">(</span>^o^)\n" +
+    "c(\")(\")";
+
+    frames.munch2 =
+    " ()()\n" +
+    " <span id=\"mouse-reference\">(</span>^-^)\n" +
+    "c(\")(\")";
+
+    frames.munch3 =
+    " ()()\n" +
+    " <span id=\"mouse-reference\">(</span>^.^)\n" +
+    "c(\")(\")";
+
+  var display = document.getElementById("display-bunny");
+  var curr = 'center';
+  function displayFrame(name) {
+    if (curr !== name) {
+      window.requestAnimationFrame(function() {
+        display.innerHTML = frames[name];
+        curr = name;
+      })
+    }
+  }
+
+  function watchMouse(e) {
+    if (animating) {
+      return;
+    }
+    var mouseX = e.pageX;
+    var mouseY = e.pageY;
+    var reference = document.getElementById("mouse-reference");
+    var rect = reference.getBoundingClientRect();
+    var centerX = (rect.left + rect.right) / 2;
+    var centerY = (rect.top + rect.bottom) / 2;
+    var dx = mouseX - centerX;
+    var dy = -(mouseY - centerY);
+    var r = Math.sqrt(dx * dx + dy * dy);
+    var theta = Math.atan2(dy, dx);
+
+    if (r <= R_CENTER) {
+      displayFrame('center');
+      // displayFrame('munch1');
+      // setTimeout(function() {
+      //   displayFrame('munch2');
+      // }, 3000);
+      // setTimeout(function() {
+      //   displayFrame('munch3');
+      // }, 3000);
+      // setTimeout(function() {
+      //   displayFrame('munch2');
+      // }, 3000);
+      // setTimeout(function() {
+      //   displayFrame('munch1');
+      // }, 3000);
+      // setTimeout(function() {
+      //   displayFrame('center');
+      // }, 3000);
+    }
+    if (r >= R_OUTER) {
+      if (rad(-45/2)+THETA_DEAD <= theta && theta <= rad(45/2)-THETA_DEAD) {
+        displayFrame('right');
+      }
+      if (rad(45/2)+THETA_DEAD <= theta && theta <= rad(135/2)-THETA_DEAD) {
+        displayFrame('topRight');
+      }
+      if (rad(135/2)+THETA_DEAD <= theta && theta <= rad(225/2)-THETA_DEAD) {
+        displayFrame('top');
+      }
+      if (rad(225/2)+THETA_DEAD <= theta && theta <= rad(315/2)-THETA_DEAD) {
+        displayFrame('topLeft');
+      }
+      if (rad(315/2)+THETA_DEAD <= theta || theta <= rad(-315/2)-THETA_DEAD) {
+        displayFrame('left');
+      }
+      if (rad(-315/2)+THETA_DEAD <= theta && theta <= rad(-225/2)-THETA_DEAD) {
+        displayFrame('bottomLeft');
+      }
+      if (rad(-225/2)+THETA_DEAD <= theta && theta <= rad(-135/2)-THETA_DEAD) {
+        displayFrame('bottom');
+      }
+      if (rad(-135/2)+THETA_DEAD <= theta && theta <= rad(-45/2)-THETA_DEAD) {
+        displayFrame('bottomRight');
+      }
+    }
+  }
+
+  // Takes a series of frames (list of objects), and schedules them with delays
+  // executes left to right, (head to tail)
+  // .function, .frame
+  // delay -> delay between frames 
+  function animate(steps, delay) {
+    for (var i = 0; i < steps.length; i++) {
+      func = steps[i].function;
+      frame = steps[i].frame;
+      setTimeout(function() {
+        func(frame);
+      }, delay);
+    }
+  }
+
+  window.onClick = function() {
+      animating = true;
+      displayFrame('munch1');
+      setTimeout(function() {
+        displayFrame('munch2');
+        setTimeout(function() {
+          displayFrame('munch3');
+          setTimeout(function() {
+            displayFrame('munch2');
+            setTimeout(function() {
+              displayFrame('munch1');
+              setTimeout(function() {
+                displayFrame('center');
+                setTimeout(function() {
+                  displayFrame('munch1');
+                  setTimeout(function() {
+                    displayFrame('munch2');
+                    setTimeout(function() {
+                      displayFrame('munch3');
+                      setTimeout(function() {
+                        animating = false;
+                      }, 100);
+                    }, 100);
+                  }, 100);
+                }, 100);
+              }, 100);
+            }, 100);
+          }, 100);
+        }, 100);
+      }, 100);
+
+      // switch(count) {
+      //   case 0:
+      //     displayFrame('munch1');
+      //     count = 1;
+      //     break;
+      //   case 1:
+      //     displayFrame('munch2');
+      //     count = 2;
+      //     break;
+      //   case 2:
+      //     displayFrame('munch3')
+      //     count = 3;
+      //     break;
+      //   case 3:
+      //     displayFrame('munch2')
+      //     count = 4;
+      //     break;
+      //   case 4:
+      //     displayFrame('munch1');
+      //     count = 5;
+      //     break;
+      //   case 5:
+      //     displayFrame('center');
+      //     count = 0;
+      //     break;
+      // }
+    }
+
+    // window.onHover = function() {
+    //   displayFrame('munch1');
+    //   setTimeout(function() {
+    //     displayFrame('munch2')
+    //   }, 2000);
+    //   setTimeout(function() {
+    //     displayFrame('munch3')
+    //   }, 2000);
+    //   setTimeout(function() {
+    //     displayFrame('munch2')
+    //   }, 2000);
+    //   setTimeout(function() {
+    //     displayFrame('munch1')
+    //   }, 2000);
+    //   setTimeout(function() {
+    //     displayFrame('center')
+    //   }, 2000);
+    // }
+
+  document.onmousemove = watchMouse;
+
+})();
+
+
+
+  // var count = 0
+  //
+  // var up =
+  // " ()()\n" +
+  // " ('')\n" +
+  // "c(\")(\")";
+  //
+  // var up_right =
+  // " (\\(\\\n" +
+  // " (='')\n" +
+  // "c(\")(\")";
+  //
+  // var right =
+  // " (\\(\\\n" +
+  // " (=••)\n" +
+  // "c(\")(\")";
+  //
+  // var up_left =
+  // "  /)/)\n" +
+  // " (''=)\n" +
+  // "c(\")(\")";
+  //
+  // var left =
+  // "  /)/)\n" +
+  // " (••=)\n" +
+  // "c(\")(\")";
+  //
+  // var down =
+  // " ()()\n" +
+  // " (..)\n" +
+  // "c(\")(\")";
+  //
+  // var down_left =
+  // "  /)/)\n" +
+  // " (..=)\n" +
+  // "c(\")(\")";
+  //
+  // var down_right =
+  // " (\\(\\\n" +
+  // " (=..)\n" +
+  // "c(\")(\")";
+  //
+  // var center =
+  // " ()()\n" +
+  // " (^O^)\n" +
+  // "c(\")(\")";
+  //
+</script>
+
+</body>
+</html>
